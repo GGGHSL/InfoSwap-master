@@ -9,7 +9,7 @@ Copyright (C) 2021, CRIPAC, NLPR, CASIA. All rights reserved. Licensed under the
 #### Requirements
 See [requirements.txt](./requirements.txt), tested on Linux platforms. 
 
-For pre-trained models, please [send an email to us](mailto:gege.gao@cripac.ia.ac.cn), and describe in detail your purpose of using this model.
+For pre-trained models, please [send a request email to us](mailto:gege.gao@cripac.ia.ac.cn) and describe in detail your purpose of using the models.
 
 #### Example Usage
 
@@ -20,7 +20,7 @@ git clone https://github.com/GGGHSL/InfoSwap-master.git
 cd InfoSwap-master
 ```
 
-Run the following command to translate edges to shoes
+Run the following command: 
 ```shell script    
 python inference_demo.py -src [YOUR SOURCE IMAGE] -tar [YOUR DIR OF TARGET IMAGES] -save [YOUR SAVE DIR] --ib_mode [CHOICES: smooth, no_smooth]
 ```
