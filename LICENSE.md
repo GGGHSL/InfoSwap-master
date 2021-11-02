@@ -1,5 +1,3 @@
-Copyright (c) 2021, CRIPAC, NLPR, CASIA. All rights reserved.
-
 
 ## Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
 

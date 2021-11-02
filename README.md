@@ -1,5 +1,9 @@
 ## InfoSwap: Information Bottleneck Disentanglement for Identity Swapping
 
+### License
+
+Copyright (C) 2021, CRIPAC, NLPR, CASIA. All rights reserved. Licensed under the CC BY-NC-SA 4.0 license ([https://creativecommons.org/licenses/by-nc-sa/4.0/](https://creativecommons.org/licenses/by-nc-sa/4.0/)).
+
 ### Code usage
 
 Please check out the [user manual page](USAGE.md).
