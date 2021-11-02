@@ -39,9 +39,9 @@ class deconv4x4(nn.Module):
         return torch.cat((x, skip), dim=1)
 
 
-class UnetEncoder1024(nn.Module):
+class UnetDecoder1024(nn.Module):
     def __init__(self):
-        super(UnetEncoder1024, self).__init__()
+        super(UnetDecoder1024, self).__init__()
         # if img_1024:
         #     self.conv0 = nn.Conv2d(3, 32, 3, 1, 1, bias=False)
         # else:
