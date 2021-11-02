@@ -1,8 +1,18 @@
+'''
+The code for calculating mutual information refers to the implementation of this paper:
+@inproceedings{
+    schulz2020iba,
+    title={Restricting the Flow: Information Bottlenecks for Attribution},
+    author={Schulz, Karl and Sixt, Leon and Tombari, Federico and Landgraf, Tim},
+    booktitle={International Conference on Learning Representations},
+    year={2020},
+    url={https://openreview.net/forum?id=S1xWh1rYwB}
+}
+'''
+
 import math
-import warnings
 import torch
 import torch.nn as nn
-from torchvision import transforms
 import torch.nn.functional as F
 
 
@@ -228,85 +238,3 @@ def get_restricted_id_attrs(model, readout_feats, lambdas, R_params, lamb_detach
         return id, feats, Zs
     else:
         return id, feats
-
-
-if __name__ == '__main__':
-    device = torch.device('cuda:7')
-    B = 2
-    N = 10
-
-    from basic_encoder128 import Backbone128
-    model = Backbone128(50, 0.6, 'ir_se').eval().to(device)
-    state_dict = torch.load('/data1/gege.gao/projects/InfoSwap-master/model_128_ir_se50.pth', map_location=device)
-    model.load_state_dict(state_dict, strict=True)
-
-    Xs = torch.rand(B, 3, 512, 512).to(device)
-    Xs_id = model(
-        F.interpolate(Xs[:, :, 37:475, 37:475], size=[128, 128], mode='bilinear', align_corners=True),
-        cache_feats=True
-    )
-    _readout_feats = model.features[:(N + 1)]  # one layer deeper than the z_attrs needed
-    in_c = sum(map(lambda f: f.shape[-3], _readout_feats))
-    print(in_c)
-    out_c_list = [_readout_feats[i].shape[-3] for i in range(N)]
-    IBAs = IIB(in_c, out_c_list, device).train()
-
-    param_dict = []  # load pre-calculated mean and std
-    for i in range(N):
-        state = torch.load(f'/data1/gege.gao/projects/InfoSwap-master/weights128/readout_layer{i}.pth')
-        param_dict.append([state['m'], state['s']])
-        print(f'readout_layer{i} | ', end='')
-    print()
-    # ----------------------------------------------------------
-    Xt = torch.randn((B, 3, 512, 512)).to(device)
-    X = torch.cat((Xs, Xt), dim=0)  # [2*B, 3, 512, 512]
-
-    # 1. Calculate Ground Truth identity: [2*B, 512]
-    with torch.no_grad():
-        X_id = model(
-            F.interpolate(X[:, :, 37:475, 37:475], size=[128, 128], mode='bilinear', align_corners=True),
-            cache_feats=True
-        )
-
-    # 2. Get Inter-features After One Feed-Forward: batch size is 2 * B, [:B] for Xs and [B:] for Xt
-    readout_feats = model.features[:(N+1)]
-
-    # 3. Calculate IBA Loss: id-encoding loss + β * I(R, Z)
-    Info = 0.
-    X_id_restrict = torch.zeros_like(X_id).to(device)  # [2*B, 512]
-    Xt_feats = []
-    Xs_feats = []
-    X_lambda = []
-
-    for i in range(N):  # multi-average information bottleneck
-        R = readout_feats[i]
-        # print(R.shape)  # [2*B, Cr, Hr, Wr]
-        # iba = getattr(iib, f'iba_{i}')
-
-        Z, lambda_, info = getattr(IBAs, f'iba_{i}')(R, readout_feats, m_r=param_dict[i][0],
-                                                     std_r=param_dict[i][1])  # [2*B, Cr, Hr, Wr]
-        print(lambda_.mean())
-        # (1) loss
-        X_id_restrict += model.restrict_forward(Z, i)  # [2*B, 512]
-        Info += info.mean()
-
-        # (2) attributes
-        Rs, Rt = R[:B], R[B:]
-        lambda_s, lambda_t = lambda_[:B], lambda_[B:]
-
-        m_s = torch.mean(Rs, dim=0)  # [C, H, W]
-        std_s = torch.mean(Rs, dim=0)
-        eps_s = torch.randn(size=Rt.shape).to(Rt.device) * std_s + m_s
-        feat_t = Rt * (1. - lambda_t) + lambda_t * eps_s
-        Xt_feats.append(feat_t)  # only related with lambda
-
-        m_t = torch.mean(Rt, dim=0)  # [C, H, W]
-        std_t = torch.mean(Rt, dim=0)
-        eps_t = torch.randn(size=Rs.shape).to(Rs.device) * std_t + m_t
-        feat_s = Rs * (1. - lambda_s) + lambda_s * eps_t
-        Xs_feats.append(feat_s)  # only related with lambda
-
-        X_lambda.append(lambda_)
-
-    X_id_restrict /= float(N)
-    print(X_id_restrict.shape)  # [2*B, 512]
