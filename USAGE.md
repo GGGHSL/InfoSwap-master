@@ -6,7 +6,7 @@
 #### Requirements
 See [requirements.txt](./requirements.txt), tested on Linux platforms. 
 
-For pre-trained models, please [send an email to us](gege.gao@cripac.ia.ac.cn), and describe in detail your purpose of using this model.
+For pre-trained models, please [send an email to us](mailto:gege.gao@cripac.ia.ac.cn), and describe in detail your purpose of using this model.
 
 #### Example Usage
 
