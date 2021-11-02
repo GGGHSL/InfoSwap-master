@@ -249,8 +249,8 @@ def inference(src_img_path, tar_dir, save_dir='./results'):
 if __name__ == '__main__':
     torch.backends.cudnn.benchmark = True
     ROOT = {
-        'smooth': {'root': './checkpoints/w_kernel_smooth', 'path': 'ckpt_ks_*.pth'},
-        'no_smooth': {'root': './checkpoints/wo_kernel_smooth', 'path': 'ckpt_*.pth'}
+        'smooth': {'root': './checkpoints_512/w_kernel_smooth', 'path': 'ckpt_ks_*.pth'},
+        'no_smooth': {'root': './checkpoints_512/wo_kernel_smooth', 'path': 'ckpt_*.pth'}
     }
 
     p = argparse.ArgumentParser(
