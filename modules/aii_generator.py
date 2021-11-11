@@ -31,9 +31,6 @@ class AIILayerLambda(nn.Module):
         self.fc2 = nn.Linear(c_id, c_h)
         self.norm = nn.InstanceNorm2d(c_h, affine=False)
 
-        # self.conv_h = nn.Conv2d(c_h, 1, kernel_size=1, stride=1, padding=0, bias=True)
-        # self.conv_lamb = nn.Conv2d(c_lamb, 1, kernel_size=1, stride=1, padding=0, bias=True)
-        # self.conv_m = nn.Conv2d(2, 1, kernel_size=1, stride=1, padding=0, bias=True)
         self.conv_2h = nn.Conv2d(c_h + c_lamb, 1, kernel_size=1, stride=1, padding=0, bias=True)
 
     def forward(self, h_in, z_attr, z_id, lamb):
@@ -44,10 +41,6 @@ class AIILayerLambda(nn.Module):
             M = torch.sigmoid(self.conv_2h(h))
         else:
             M = torch.sigmoid(self.conv_2h(torch.cat((h, lamb), dim=1)))
-        # # split calculate:
-        # M_h = self.conv_h(h)
-        # M_lamb = self.conv_lamb(lamb)
-        # M = torch.sigmoid(self.conv_m(torch.cat((M_h, M_lamb), dim=1)))
 
         gamma_attr = self.conv1(z_attr)
         beta_attr = self.conv2(z_attr)
@@ -115,10 +108,7 @@ class AII512(nn.Module):
         self.AADBlk6 = AIIResBlkLambda(256, 128, 128, c_id, c_lamb=64)
         self.AADBlk7 = AIIResBlkLambda(128, 64, 64, c_id, c_lamb=32)
         self.last_no_lamb = last_no_lamb
-        if last_no_lamb:
-            self.AADBlk8 = AAD_ResBlk(64, 3, 64, c_id)
-        else:
-            self.AADBlk8 = AIIResBlkLambda(64, 3, 64, c_id, c_lamb=32)
+        self.AADBlk8 = AIIResBlkLambda(64, 3, 64, c_id, c_lamb=32)
 
         self.deconv = nn.ConvTranspose2d(in_channels=32, out_channels=3, kernel_size=4, stride=2, padding=1, bias=False)
 
@@ -159,11 +149,7 @@ class AII512(nn.Module):
         m = F.interpolate(m, scale_factor=2, mode='bilinear', align_corners=True)
         # print(m.shape)
 
-        if self.last_no_lamb:
-            y = self.AADBlk8(m, z_attr[7], z_id)
-        else:
-            y = self.AADBlk8(m, z_attr[7], z_id, lamb[7])
-        # y = self.deconv(m)  #
+        y = self.AADBlk8(m, z_attr[7], z_id, lamb[7])
         # print(y.shape)
 
         return torch.tanh(y)
@@ -184,11 +170,7 @@ class AII256(nn.Module):
             self.AADBlk5 = AIIResBlkLambda(512, 256, 256, c_id, c_lamb=128)
             self.AADBlk6 = AIIResBlkLambda(256, 128, 128, c_id, c_lamb=64)
             self.AADBlk7 = AIIResBlkLambda(128, 64, 64, c_id, c_lamb=64)
-            self.last_no_lamb = last_no_lamb
-            if last_no_lamb:
-                self.AADBlk8 = AAD_ResBlk(64, 3, 64, c_id)
-            else:
-                self.AADBlk8 = AIIResBlkLambda(64, 3, 64, c_id, c_lamb=64)
+            self.AADBlk8 = AIIResBlkLambda(64, 3, 64, c_id, c_lamb=64)
         else:
             self.AADBlk1 = AIIResBlkLambda(1024, 1024, c_attr=1024, c_id=c_id, c_lamb=0)
             self.AADBlk2 = AIIResBlkLambda(1024, 1024, 2048, c_id, 0)
@@ -205,9 +187,6 @@ class AII256(nn.Module):
 
     def forward(self, z_id, z_attr, lamb):
         m = self.up1(z_id.reshape(z_id.shape[0], -1, 1, 1))  # [B, 1024, 2, 2]  for 256 generation
-        # if m.shape[-1] != z_attr[0].shape[-1]:
-        #     m = self.up2(m)  # [B, 1024, 4, 4] for 512 generation
-
         if not self.use_lamb:
             lamb = [None for _ in range(8)]
 
@@ -239,12 +218,7 @@ class AII256(nn.Module):
         m = F.interpolate(m, scale_factor=2, mode='bilinear', align_corners=True)
         # print(m.shape)
 
-        if self.use_lamb and self.last_no_lamb:
-            y = self.AADBlk8(m, z_attr[7], z_id)
-        else:
-            y = self.AADBlk8(m, z_attr[7], z_id, lamb[7])
-        # y = self.deconv(m)  #
-        # print(y.shape)
+        y = self.AADBlk8(m, z_attr[7], z_id, lamb[7])
 
         return torch.tanh(y)
 
@@ -263,19 +237,8 @@ class AII1024(nn.Module):
         self.AADBlk5 = AIIResBlkLambda(512, 256, 256, c_id, c_lamb=128)
         self.AADBlk6 = AIIResBlkLambda(256, 128, 128, c_id, c_lamb=64)
         self.AADBlk7 = AIIResBlkLambda(128, 64, 64, c_id, c_lamb=32)
-        # self.last_no_lamb = last_no_lamb
-        # if last_no_lamb:
-        #     self.AADBlk8 = AAD_ResBlk(64, 3, 64, c_id)
-        # else:
-        #     self.AADBlk8 = AIIResBlkLambda(64, 3, 64, c_id, c_lamb=32)
         self.AADBlk_8 = AIIResBlkLambda(64, 64, 64, c_id, c_lamb=32)
-
-        self.last_no_lamb = last_no_lamb
-        if last_no_lamb:
-            self.AADBlk9 = AAD_ResBlk(64, 3, 64, c_id)
-        else:
-            self.AADBlk9 = AIIResBlkLambda(64, 3, 64, c_id, c_lamb=32)
-        # self.deconv = nn.ConvTranspose2d(in_channels=32, out_channels=3, kernel_size=4, stride=2, padding=1, bias=False)
+        self.AADBlk9 = AIIResBlkLambda(64, 3, 64, c_id, c_lamb=32)
 
         self.apply(weight_init)
 
@@ -318,16 +281,6 @@ class AII1024(nn.Module):
         m = self.AADBlk_8(m, z_attr[7], z_id, lamb[7])  # 64x512x512
         m = F.interpolate(m, scale_factor=2, mode='bilinear', align_corners=True)  #
 
-        # if self.last_no_lamb:
-        #     y = self.AADBlk9(m, z_attr[8], z_id)
-        # else:
-        #     y = self.AADBlk9(m, z_attr[8], z_id, lamb[8])
-        if self.last_no_lamb:
-            y = self.AADBlk9(m, z_attr[8], z_id)  # z_attr[8]: 64x1024x1024
-        else:
-            y = self.AADBlk9(m, z_attr[8], z_id, lamb[8])
-
-        # y = self.deconv(m)  #
-        # print(y.shape)
+        y = self.AADBlk9(m, z_attr[8], z_id, lamb[8])
 
         return torch.tanh(y)
