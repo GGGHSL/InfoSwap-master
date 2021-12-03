@@ -72,7 +72,7 @@ def inference(src_img_path, tar_dir, save_dir='./results'):
     """ inference: """
     Xs = cv2.imread(src_img_path)
     Xs = Image.fromarray(Xs)
-    face_s = mtcnn.align_multi(Xs, min_face_size=20., thresholds=[0.1, 0.6, 0.6], crop_size=(512, 512))
+    face_s = mtcnn.align_multi(Xs, min_face_size=64., thresholds=[0.6, 0.7, 0.8], factor=0.707, crop_size=(512, 512))
     if face_s is not None:
         Xs = face_s[0]
     else:
