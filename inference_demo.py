@@ -177,7 +177,7 @@ def inference(src_img_path, tar_dir, save_dir='./results'):
                 lambda_s, lambda_t = lambda_[:B], lambda_[B:]
 
                 m_s = torch.mean(Rs, dim=0)  # [C, H, W]
-                std_s = torch.mean(Rs, dim=0)
+                std_s = torch.std(Rs, dim=0)
                 Rs_params.append([m_s, std_s])
 
                 eps_s = torch.randn(size=Rt.shape).to(Rt.device) * std_s + m_s
