@@ -190,14 +190,14 @@ class IIB(nn.Module):
             lambda_s, lambda_t = lambda_[:B], lambda_[B:]
 
             m_s = torch.mean(Rs, dim=0)  # [C, H, W]
-            std_s = torch.std(Rs, dim=0)
+            std_s = torch.mean(Rs, dim=0)
             Rs_params.append([m_s, std_s])
             eps_s = torch.randn(size=Rt.shape).to(Rt.device) * std_s + m_s
             feat_t = Rt * (1. - lambda_t) + lambda_t * eps_s
             Xt_feats.append(feat_t)  # only related with lambda
 
             m_t = torch.mean(Rt, dim=0)  # [C, H, W]
-            std_t = torch.std(Rt, dim=0)
+            std_t = torch.mean(Rt, dim=0)
             Rt_params.append([m_t, std_t])
             eps_t = torch.randn(size=Rs.shape).to(Rs.device) * std_t + m_t
             feat_s = Rs * (1. - lambda_s) + lambda_s * eps_t

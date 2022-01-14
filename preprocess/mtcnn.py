@@ -2,10 +2,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 from PIL import Image
-from mtcnn_pytorch.src.get_nets import PNet, RNet, ONet
-from mtcnn_pytorch.src.box_utils import nms, calibrate_box, get_image_boxes, convert_to_square
-from mtcnn_pytorch.src.first_stage import run_first_stage
-from mtcnn_pytorch.src.align_trans import get_reference_facial_points, warp_and_crop_face
+from preprocess.mtcnn_pytorch.src.get_nets import PNet, RNet, ONet
+from preprocess.mtcnn_pytorch.src.box_utils import nms, calibrate_box, get_image_boxes, convert_to_square
+from preprocess.mtcnn_pytorch.src.first_stage import run_first_stage
+from preprocess.mtcnn_pytorch.src.align_trans import get_reference_facial_points, warp_and_crop_face
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

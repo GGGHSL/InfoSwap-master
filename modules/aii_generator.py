@@ -95,7 +95,7 @@ class AIIResBlkLambda(nn.Module):
 
 
 class AII512(nn.Module):
-    def __init__(self, c_id=512, last_no_lamb=False):
+    def __init__(self, c_id=512):
         super(AII512, self).__init__()
         self.up1 = nn.ConvTranspose2d(c_id, 1024, kernel_size=2, stride=1, padding=0)
         self.up2 = nn.ConvTranspose2d(1024, 1024, kernel_size=2, stride=2, padding=0)
@@ -107,7 +107,7 @@ class AII512(nn.Module):
         self.AADBlk5 = AIIResBlkLambda(512, 256, 256, c_id, c_lamb=128)
         self.AADBlk6 = AIIResBlkLambda(256, 128, 128, c_id, c_lamb=64)
         self.AADBlk7 = AIIResBlkLambda(128, 64, 64, c_id, c_lamb=32)
-        self.last_no_lamb = last_no_lamb
+        # self.last_no_lamb = last_no_lamb
         self.AADBlk8 = AIIResBlkLambda(64, 3, 64, c_id, c_lamb=32)
 
         self.deconv = nn.ConvTranspose2d(in_channels=32, out_channels=3, kernel_size=4, stride=2, padding=1, bias=False)

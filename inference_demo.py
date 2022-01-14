@@ -11,7 +11,7 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 from datetime import datetime, timedelta
 
-from utils import laplacian_blending
+from utils import laplacian_blending, make_image
 from modules.encoder128 import Backbone128
 from modules.iib import IIB
 from modules.aii_generator import AII512
@@ -33,16 +33,18 @@ def to_np(t: torch.Tensor):
     return t.numpy()
 
 
-def inference(src_img_path, tar_dir, save_dir='./results'):
+def inference(src_img_path, tar_dir, save_dir):
     """
     :param src_img_path: path to a source image
     :param tar_dir: path to the dir of target images
     :return: no return
     """
+    os.makedirs(save_dir, exist_ok=True)
     test_date = str(datetime.strptime(time.strftime(
         "%a, %d %b %Y %H:%M:%S", time.localtime()), "%a, %d %b %Y %H:%M:%S") + timedelta(hours=12)).split(' ')[
         0]
     save_dir = os.path.join(save_dir, test_date)
+    os.makedirs(save_dir, exist_ok=True)
 
     logger = logging.getLogger('inference')
     logger.setLevel(logging.DEBUG)
@@ -177,7 +179,7 @@ def inference(src_img_path, tar_dir, save_dir='./results'):
                 lambda_s, lambda_t = lambda_[:B], lambda_[B:]
 
                 m_s = torch.mean(Rs, dim=0)  # [C, H, W]
-                std_s = torch.std(Rs, dim=0)
+                std_s = torch.mean(Rs, dim=0)
                 Rs_params.append([m_s, std_s])
 
                 eps_s = torch.randn(size=Rt.shape).to(Rt.device) * std_s + m_s
@@ -210,6 +212,13 @@ def inference(src_img_path, tar_dir, save_dir='./results'):
             logger.info(msg)
 
         '''(3) save Y: '''
+        I = [Xs, Xt, Y]
+        image = make_image(I, 1)
+        save_path_Y = os.path.join(save_dir, prefix + '_gen_Y.' + suffix)
+        # print("save path Y: ", save_path_Y)
+        cv2.imwrite(save_path_Y, image.transpose([1, 2, 0]),
+                    [int(cv2.IMWRITE_PNG_COMPRESSION), 0])
+
         img_Y = (Y[0].cpu().numpy().transpose([1, 2, 0]) * 0.5 + 0.5) * 255
         img_Y = img_Y.astype(np.uint8)
         H, W, _ = xt.shape
@@ -234,17 +243,17 @@ def inference(src_img_path, tar_dir, save_dir='./results'):
             print(m.shape)
             res_possion = cv2.seamlessClone(frame.astype(np.uint8), xt.astype(np.uint8), m.astype(np.uint8)*255,
                                             p=(x, y), flags=cv2.NORMAL_CLONE)
-            plt.imshow(cv2.cvtColor(res_possion.astype(np.uint8), cv2.COLOR_RGB2BGR))
+            # plt.imshow(cv2.cvtColor(res_possion.astype(np.uint8), cv2.COLOR_RGB2BGR))
             plt.imsave(save_path, cv2.cvtColor(res_possion.astype(np.uint8), cv2.COLOR_RGB2BGR))
-            plt.show()
-            plt.close()
+            # plt.show()
+            # plt.close()
         except Exception as e:
             print(e)
             res = laplacian_blending(A=frame, B=xt, m=mask)
-            plt.imshow(cv2.cvtColor(res.astype(np.uint8), cv2.COLOR_RGB2BGR))
+            # plt.imshow(cv2.cvtColor(res.astype(np.uint8), cv2.COLOR_RGB2BGR))
             plt.imsave(save_path, cv2.cvtColor(res.astype(np.uint8), cv2.COLOR_RGB2BGR))
-            plt.show()
-            plt.close()
+            # plt.show()
+            # plt.close()
 
 if __name__ == '__main__':
     torch.backends.cudnn.benchmark = True
@@ -257,8 +266,9 @@ if __name__ == '__main__':
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     p.add_argument('-ib', '--ib_mode', type=str, choices=list(ROOT.keys()))
-    p.add_argument('-src', '--src_path', type=str)
-    p.add_argument('-tar', '--tar_dir', type=str)
+    p.add_argument('-src', '--src_path', type=str, default='data/src/Anna-Popplewell.png')
+    p.add_argument('-tar', '--tar_dir', type=str, default='data/tar')
+    p.add_argument('-save', '--save_dir', type=str, default='./results')
     args = p.parse_args()
 
     """ Prepare Models: """
@@ -271,7 +281,7 @@ if __name__ == '__main__':
     pathI = path.replace('*', 'I')
 
     encoder = Backbone128(50, 0.6, 'ir_se').eval().to(device)
-    state_dict = torch.load('.modules/model_128_ir_se50.pth', map_location=device)
+    state_dict = torch.load('modules/model_128_ir_se50.pth', map_location=device)
     encoder.load_state_dict(state_dict, strict=True)
 
     G = AII512().eval().to(device)
@@ -297,4 +307,4 @@ if __name__ == '__main__':
     print("Successfully load IIB!")
 
     with torch.no_grad():
-        inference(args.src_path, args.tar_dir)
+        inference(args.src_path, args.tar_dir, args.save_dir)
