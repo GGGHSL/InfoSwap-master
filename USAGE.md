@@ -9,7 +9,7 @@ Copyright (C) 2021, CRIPAC, NLPR, CASIA. All rights reserved. Licensed under the
 #### Requirements
 See [requirements.txt](./requirements.txt), tested on Linux platforms. 
 
-For pre-trained models, please [send a request email](mailto:grace.heseri@gmail.com) with subject "APPLY FOR MODELS" to us and describe **in detail** your purpose of using the models.
+For pre-trained models, please [send a request email](mailto:grace.heseri@gmail.com) with subject "APPLY FOR MODELS" to us and describe **in detail** your purpose of using the models. Please inform us your name and institution, and use an email address **certified** by your research institution (e.g., @ia.ac.cn) to send this request, as we need to confirm that our models will not be used for any potential commercial purposes. Thanks for understanding! 
 
 #### Example Usage
 
